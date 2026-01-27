@@ -41,3 +41,7 @@ temp_audio.*
 *.mp3
 *.wav
 fluent_notes/
+backend/temp/
+backend/bin/
+# Tests
+tests/reproduce_403.py

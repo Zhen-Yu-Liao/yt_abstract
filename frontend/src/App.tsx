@@ -363,11 +363,11 @@ function App() {
                                             {result.summary!}
                                         </ReactMarkdown>
                                     </div>
-                                    ) : (
-                                    <div className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-zinc-400 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                        {result.transcript}
-                                    </div>
-                                    )}
+                                        : (
+                                            <div className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-zinc-400 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                                {result.transcript}
+                                            </div>
+                                        )}
                                 </div>
                             </div>
                         </>

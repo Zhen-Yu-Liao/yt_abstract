@@ -83,11 +83,8 @@ class MediaService:
             'ffmpeg_location': os.path.dirname(ffmpeg_path) if os.path.exists(ffmpeg_path) else None,
             'progress_hooks': [progress_hook],
             # Anti-bot measures
-            'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-us,en;q=0.5',
-            },
+            # Anti-bot measures: Let yt-dlp handle headers automatically
+            # 'http_headers': { ... } removed to avoid stale signatures
             'retries': 3,
             'fragment_retries': 3,
             'extractor_retries': 3,

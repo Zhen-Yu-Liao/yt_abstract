@@ -13,7 +13,7 @@ class SummaryService:
         # Configure Gemini
         genai.configure(api_key=api_key)
         
-        # Use Gemini 1.5 Flash for speed and long context
+        # Use Gemini 2.5 Flash for speed and long context
         model = genai.GenerativeModel('gemini-2.5-flash')
         
         prompt = f"""
@@ -26,7 +26,17 @@ You are an expert content summarizer. Please summarize the following transcript 
 4.  **Detailed Notes**: Organize the content into logical sections with clear headings. Use sub-bullets to capture details.
 5.  **Quality**: Improve the readability. The input is a raw transcript, so fix grammar, remove filler words, and ensure coherence.
 6.  **Language**: Output in Traditional Chinese (繁體中文).
-7.  **Mind Map**: Create a MermaidJS mindmap code block (`mermaid`) summarizing the core structure of the video video. Ensure it is valid Mermaid syntax (e.g. `mindmap` or `graph TD`).
+7.  **Mind Map**: Create a MermaidJS mindmap code block (`mermaid`) summarizing the core structure of the video. 
+    **CRITICAL**: The code block MUST start with the specific keyword `mindmap` on the first line. Do not use `graph TD`.
+    Example:
+    ```mermaid
+    mindmap
+      Root((Main Title))
+        Topic A
+          Detail 1
+          Detail 2
+        Topic B
+    ```
 
 **Transcript:**
 {text}
