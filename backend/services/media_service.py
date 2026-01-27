@@ -12,7 +12,7 @@ class MediaService:
     def __init__(self):
         self.temp_dir = settings.TEMP_DIR
 
-    async def download_audio(self, url: str, progress_callback=None) -> tuple[Path, str, float]:
+    def download_audio(self, url: str, progress_callback=None) -> tuple[Path, str, float]:
         """
         Downloads audio from YouTube URL.
         Returns: (file_path, title, duration_seconds)
@@ -23,20 +23,52 @@ class MediaService:
         output_template = str(self.temp_dir / f"{filename}") # yt-dlp adds extension
         
         result_info = {'duration': 0, 'title': 'Unknown'}
-
+        last_update_time = [0]  # Throttle updates
+        
         def progress_hook(d):
+            import time
+            current_time = time.time()
+            status = d.get('status', 'unknown')
+            print(f"[HOOK] progress_hook called with status: {status}")  # DEBUG
+            
             if d['status'] == 'downloading':
                 if progress_callback:
                     try:
-                        p_str = d.get('_percent_str', '0%').replace('%','')
-                        # ANSI codes might be present, strip them if needed, but usually _percent_str is cleanish
-                        # simple float conversion
-                        progress_callback(float(p_str))
-                    except:
-                        pass
+                        downloaded = d.get('downloaded_bytes', 0)
+                        total = d.get('total_bytes') or d.get('total_bytes_estimate', 0)
+                        speed = d.get('speed', 0) or 0
+                        
+                        # Calculate percent
+                        if total > 0:
+                            percent = (downloaded / total) * 100
+                            percent = min(percent, 99)
+                        else:
+                            # Even without total, show 0-50% based on downloaded bytes
+                            # Assume ~50MB max for audio, cap at 50%
+                            percent = min((downloaded / (50 * 1024 * 1024)) * 50, 50)
+                        
+                        # Throttle: only update every 0.3 seconds or if significant change
+                        if current_time - last_update_time[0] >= 0.3:
+                            last_update_time[0] = current_time
+                            progress_info = {
+                                'percent': percent,
+                                'downloaded': downloaded,
+                                'total': total,
+                                'speed': speed
+                            }
+                            progress_callback(progress_info)
+                            print(f"[DOWNLOAD] {percent:.1f}% - {downloaded:,}/{total:,} bytes @ {speed:.0f} B/s")
+                    except Exception as e:
+                        print(f"[DOWNLOAD PROGRESS ERROR] {e}")
             elif d['status'] == 'finished':
-                pass
+                if progress_callback:
+                    # Get final file size
+                    downloaded = d.get('downloaded_bytes', 0) or d.get('total_bytes', 0)
+                    progress_callback({'percent': 100, 'downloaded': downloaded, 'total': downloaded, 'speed': 0})
+                    print(f"[DOWNLOAD] 100% - Finished ({downloaded:,} bytes)")
 
+        ffmpeg_path = os.path.join(settings.BASE_DIR, "bin", "ffmpeg.exe")
+        
         ydl_opts = {
             'format': 'bestaudio/best',
             'postprocessors': [{
@@ -45,16 +77,30 @@ class MediaService:
                 'preferredquality': '192',
             }],
             'outtmpl': output_template + ".%(ext)s",
-            'quiet': True,
-            'no_warnings': True,
-            'progress_hooks': [progress_hook]
+            'quiet': False,  # Need to be False for progress_hooks to work properly
+            'no_warnings': False,  # Allow warnings for debugging
+            'noprogress': False,  # Ensure progress is not disabled
+            'ffmpeg_location': os.path.dirname(ffmpeg_path) if os.path.exists(ffmpeg_path) else None,
+            'progress_hooks': [progress_hook],
+            # Anti-bot measures
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-us,en;q=0.5',
+            },
+            'retries': 3,
+            'fragment_retries': 3,
+            'extractor_retries': 3,
+            'ignoreerrors': False,
+            # Note: cookiesfrombrowser removed due to DPAPI errors on Windows
         }
 
         try:
+            if progress_callback:
+                progress_callback({'percent': 0, 'downloaded': 0, 'total': 0, 'speed': 0, 'message': 'Preparing download...'})
+
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 logger.info(f"Starting download for URL: {url}")
-                # extract_info with download=False first to get metadata? 
-                # No, download=True allows hooks to run.
                 info = ydl.extract_info(url, download=True)
                 title = info.get('title', 'Unknown Title')
                 duration = float(info.get('duration', 0))

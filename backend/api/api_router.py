@@ -35,28 +35,36 @@ async def process_stream_video(request: ProcessRequest):
             if request.mode == "api" and not request.openai_api_key:
                 yield format_sse("error", "OpenAI API Key is required for API mode")
                 return
-            if request.task_type == "summary" and not request.gemini_api_key:
-                yield format_sse("error", "Gemini API Key is required for summary task")
+            from backend.core.config import settings
+            if request.task_type == "summary" and not request.gemini_api_key and not settings.GEMINI_API_KEY:
+                yield format_sse("error", "Gemini API Key is required for summary task (or set GEMINI_API_KEY in .env)")
                 return
 
             # 2. Download Media (with Queue for progress)
             progress_queue = asyncio.Queue()
+            loop = asyncio.get_running_loop()  # Capture event loop for thread-safe callback
             
-            def download_progress_callback(percent):
-                progress_queue.put_nowait(percent)
+            def download_progress_callback(progress_info):
+                # progress_info is now a dict: {percent, downloaded, total, speed}
+                loop.call_soon_threadsafe(progress_queue.put_nowait, progress_info)
 
-            # Start download in background
+            # Start download in background thread to avoid blocking event loop
             download_task = asyncio.create_task(
-                media_service.download_audio(request.url, download_progress_callback)
+                asyncio.to_thread(media_service.download_audio, request.url, download_progress_callback)
             )
 
             # Consume queue while downloading
             while not download_task.done():
                 try:
                     # Wait for progress or task completion
-                    # We use a timeout to check task status periodically if queue is empty
-                    percent = await asyncio.wait_for(progress_queue.get(), timeout=0.1)
-                    yield format_sse("progress", {"stage": "downloading", "progress": percent})
+                    progress_info = await asyncio.wait_for(progress_queue.get(), timeout=0.1)
+                    yield format_sse("progress", {
+                        "stage": "downloading",
+                        "progress": progress_info.get('percent', 0),
+                        "downloaded": progress_info.get('downloaded', 0),
+                        "total": progress_info.get('total', 0),
+                        "speed": progress_info.get('speed', 0)
+                    })
                 except asyncio.TimeoutError:
                     continue
             

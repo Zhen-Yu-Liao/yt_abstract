@@ -9,6 +9,16 @@ from typing import Generator, Union
 
 logger = logging.getLogger(__name__)
 
+def _format_timestamp(seconds: float) -> str:
+    """Convert seconds to MM:SS format."""
+    minutes = int(seconds // 60)
+    secs = int(seconds % 60)
+    return f"{minutes:02d}:{secs:02d}"
+
+def _format_segment(start: float, end: float, text: str) -> str:
+    """Format a segment with timestamp range."""
+    return f"[{_format_timestamp(start)} - {_format_timestamp(end)}] {text.strip()}"
+
 class TranscriptionStrategy(ABC):
     @abstractmethod
     def transcribe(self, audio_path: Path, duration: float, api_key: str = None) -> Generator[tuple[str, float], None, str]:
@@ -60,41 +70,73 @@ class LocalFasterWhisperStrategy(TranscriptionStrategy):
             vad_filter=True
         )
         
-        full_text_list = []
+        formatted_segments = []
         for segment in segments:
-            full_text_list.append(segment.text)
+            # Format with timestamp
+            formatted_line = _format_segment(segment.start, segment.end, segment.text)
+            formatted_segments.append(formatted_line)
             # Calculate progress
             if duration > 0:
                 progress = min(segment.end / duration, 0.99)
-                yield {"type": "progress", "value": progress * 100} # 0-100 scale
+                yield {"type": "progress", "value": progress * 100}  # 0-100 scale
         
-        full_text = " ".join(full_text_list)
+        full_text = "\n".join(formatted_segments)
         yield {"type": "complete", "text": full_text}
 
-class OpenAIApiStrategy(TranscriptionStrategy):
+class GroqApiStrategy(TranscriptionStrategy):
     def transcribe(self, audio_path: Path, duration: float, api_key: str = None):
         if not api_key:
-            raise ValueError("API Key is required for API Mode")
+            raise ValueError("Groq API Key is required for Cloud API Mode")
         
-        logger.info("Transcribing using OpenAI API...")
+        logger.info("Transcribing using Groq API...")
         yield {"type": "progress", "value": 10} # Fake start progress
         
-        client = openai.OpenAI(api_key=api_key)
+        # Groq-compatible client
+        client = openai.OpenAI(
+            api_key=api_key,
+            base_url="https://api.groq.com/openai/v1"
+        )
         
-        with open(audio_path, "rb") as audio_file:
-            yield {"type": "progress", "value": 50} # Uploading...
-            transcript = client.audio.transcriptions.create(
-                model="whisper-1", 
-                file=audio_file
-            )
-        
-        yield {"type": "progress", "value": 100}
-        yield {"type": "complete", "text": transcript.text}
+        try:
+            with open(audio_path, "rb") as audio_file:
+                yield {"type": "progress", "value": 50}  # Uploading...
+                
+                # Use Groq's Whisper model (usually very fast)
+                transcript = client.audio.transcriptions.create(
+                    model="whisper-large-v3", 
+                    file=audio_file,
+                    response_format="verbose_json"  # Get segments with timestamps
+                )
+            
+            yield {"type": "progress", "value": 90}
+            
+            # Format segments with timestamps
+            formatted_segments = []
+            if hasattr(transcript, 'segments'):
+                for seg in transcript.segments:
+                    # Check if seg is dict or object
+                    start = seg.get('start') if isinstance(seg, dict) else seg.start
+                    end = seg.get('end') if isinstance(seg, dict) else seg.end
+                    text = seg.get('text') if isinstance(seg, dict) else seg.text
+                    
+                    formatted_line = _format_segment(start, end, text)
+                    formatted_segments.append(formatted_line)
+            else:
+                # Fallback if no segments returned (though verbose_json should have them)
+                formatted_segments.append(transcript.text)
+            
+            full_text = "\n".join(formatted_segments)
+            yield {"type": "progress", "value": 100}
+            yield {"type": "complete", "text": full_text}
+            
+        except Exception as e:
+            logger.error(f"Groq API Error: {str(e)}")
+            raise RuntimeError(f"Groq Transcription Failed: {str(e)}")
 
 class TranscriptionService:
     def __init__(self):
         self.local_strategy = None 
-        self.api_strategy = OpenAIApiStrategy()
+        self.api_strategy = GroqApiStrategy()
         
     def stream_transcribe(self, audio_path: Path, duration: float, mode: str, api_key: str = None):
         if mode == "local":

@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Allow extra fields from .env (like OPENAI_API_KEY, GEMINI_API_KEY)
 
 settings = Settings()
 

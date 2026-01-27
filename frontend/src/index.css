@@ -3,13 +3,41 @@
 @tailwind utilities;
 
 @layer base {
-    :root {
-        --background: 240 10% 3.9%;
-        --foreground: 0 0% 98%;
-    }
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+  }
+ 
+  body {
+    @apply bg-zinc-950 text-zinc-100 antialiased selection:bg-purple-500/30 selection:text-purple-200;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+  }
+}
 
-    body {
-        background-color: hsl(var(--background));
-        color: hsl(var(--foreground));
-    }
+@layer utilities {
+  .glass-panel {
+    @apply bg-zinc-900/40 backdrop-blur-xl border border-white/5 shadow-2xl;
+  }
+  
+  .glass-input {
+    @apply bg-zinc-950/50 border border-white/10 focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20 transition-all duration-300;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-zinc-950;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-zinc-800 rounded-full hover:bg-zinc-700 transition-colors;
 }
