@@ -1,0 +1,306 @@
+{
+  "version": "1.0",
+  "children": [
+    {
+      "id": "root",
+      "name": "YT Abstract App",
+      "type": "frame",
+      "x": 0,
+      "y": 0,
+      "width": 1200,
+      "height": 900,
+      "fill": "#09090b",
+      "layout": "vertical",
+      "gap": 48,
+      "padding": 60,
+      "children": [
+        {
+          "id": "header",
+          "name": "Header",
+          "type": "frame",
+          "width": "fill_container",
+          "layout": "horizontal",
+          "gap": 20,
+          "align": "center",
+          "children": [
+            {
+              "id": "iconBox",
+              "type": "frame",
+              "width": 64,
+              "height": 64,
+              "cornerRadius": 16,
+              "fill": "#1e3a8a",
+              "layout": "center",
+              "align": "center",
+              "children": [
+                {
+                  "id": "icon",
+                  "type": "icon_font",
+                  "content": "smart_display",
+                  "iconFontFamily": "Material Symbols Rounded",
+                  "fontSize": 32,
+                  "fill": "#60a5fa"
+                }
+              ]
+            },
+            {
+              "id": "titleGroup",
+              "type": "frame",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "id": "title",
+                  "type": "text",
+                  "content": "YT Abstract",
+                  "fontSize": 36,
+                  "fontWeight": "bold",
+                  "fill": "#60a5fa",
+                  "fontFamily": "Inter"
+                },
+                {
+                  "id": "subtitle",
+                  "type": "text",
+                  "content": "Design driven workflow for video summarization",
+                  "fontSize": 16,
+                  "fill": "#a1a1aa",
+                  "fontFamily": "Inter"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mainCard",
+          "type": "frame",
+          "width": 800,
+          "fill": "#18181b",
+          "cornerRadius": 24,
+          "padding": 40,
+          "gap": 32,
+          "stroke": "#27272a",
+          "strokeThickness": 1,
+          "layout": "vertical",
+          "children": [
+            {
+              "id": "urlSection",
+              "type": "frame",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 12,
+              "children": [
+                {
+                  "id": "urlLabel",
+                  "type": "text",
+                  "content": "YouTube URL",
+                  "fontSize": 14,
+                  "fontWeight": "medium",
+                  "fill": "#d4d4d8",
+                  "fontFamily": "Inter"
+                },
+                {
+                  "id": "urlInput",
+                  "type": "frame",
+                  "width": "fill_container",
+                  "height": 56,
+                  "fill": "#09090b",
+                  "stroke": "#27272a",
+                  "strokeThickness": 1,
+                  "cornerRadius": 8,
+                  "padding": 16,
+                  "layout": "vertical",
+                  "align": "center",
+                  "children": [
+                    {
+                      "id": "urlText",
+                      "type": "text",
+                      "content": "https://www.youtube.com/watch?v=...",
+                      "fontSize": 16,
+                      "fill": "#52525b",
+                      "fontFamily": "Inter"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "configGrid",
+              "type": "frame",
+              "width": "fill_container",
+              "layout": "horizontal",
+              "gap": 32,
+              "children": [
+                {
+                  "id": "modeSection",
+                  "type": "frame",
+                  "width": 340,
+                  "layout": "vertical",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "id": "modeLabel",
+                      "type": "text",
+                      "content": "Computing Mode",
+                      "fontSize": 14,
+                      "fontWeight": "medium",
+                      "fill": "#a1a1aa",
+                      "fontFamily": "Inter"
+                    },
+                    {
+                      "id": "modeToggle",
+                      "type": "frame",
+                      "width": "fill_container",
+                      "height": 48,
+                      "layout": "horizontal",
+                      "fill": "#09090b",
+                      "stroke": "#27272a",
+                      "strokeThickness": 1,
+                      "cornerRadius": 8,
+                      "padding": 4,
+                      "children": [
+                        {
+                          "id": "modeLocal",
+                          "type": "frame",
+                          "width": 160,
+                          "height": "fill_container",
+                          "fill": "#2563eb",
+                          "cornerRadius": 6,
+                          "layout": "center",
+                          "align": "center",
+                          "children": [
+                            {
+                              "id": "localText",
+                              "type": "text",
+                              "content": "Local GPU",
+                              "fontSize": 14,
+                              "fontWeight": "medium",
+                              "fill": "#ffffff",
+                              "fontFamily": "Inter"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "modeApi",
+                          "type": "frame",
+                          "width": 160,
+                          "height": "fill_container",
+                          "layout": "center",
+                          "align": "center",
+                          "children": [
+                            {
+                              "id": "apiText",
+                              "type": "text",
+                              "content": "Cloud API",
+                              "fontSize": 14,
+                              "fontWeight": "medium",
+                              "fill": "#71717a",
+                              "fontFamily": "Inter"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "taskSection",
+                  "type": "frame",
+                  "width": 340,
+                  "layout": "vertical",
+                  "gap": 12,
+                  "children": [
+                    {
+                      "id": "taskLabel",
+                      "type": "text",
+                      "content": "Task Type",
+                      "fontSize": 14,
+                      "fontWeight": "medium",
+                      "fill": "#a1a1aa",
+                      "fontFamily": "Inter"
+                    },
+                    {
+                      "id": "taskToggle",
+                      "type": "frame",
+                      "width": "fill_container",
+                      "height": 48,
+                      "layout": "horizontal",
+                      "fill": "#09090b",
+                      "stroke": "#27272a",
+                      "strokeThickness": 1,
+                      "cornerRadius": 8,
+                      "padding": 4,
+                      "children": [
+                        {
+                          "id": "taskTranscribe",
+                          "type": "frame",
+                          "width": 160,
+                          "height": "fill_container",
+                          "layout": "center",
+                          "align": "center",
+                          "children": [
+                            {
+                              "id": "transcribeText",
+                              "type": "text",
+                              "content": "Transcribe",
+                              "fontSize": 14,
+                              "fontWeight": "medium",
+                              "fill": "#71717a",
+                              "fontFamily": "Inter"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "taskSummary",
+                          "type": "frame",
+                          "width": 160,
+                          "height": "fill_container",
+                          "fill": "#ea580c",
+                          "cornerRadius": 6,
+                          "layout": "center",
+                          "align": "center",
+                          "children": [
+                            {
+                              "id": "summaryText",
+                              "type": "text",
+                              "content": "+ Summary",
+                              "fontSize": 14,
+                              "fontWeight": "medium",
+                              "fill": "#ffffff",
+                              "fontFamily": "Inter"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "actionBtn",
+              "type": "frame",
+              "width": "fill_container",
+              "height": 56,
+              "fill": "linear-gradient(90deg, #2563eb, #4f46e5)",
+              "cornerRadius": 12,
+              "layout": "center",
+              "align": "center",
+              "shadow": "0 4px 6px -1px rgba(37, 99, 235, 0.2)",
+              "children": [
+                {
+                  "id": "btnText",
+                  "type": "text",
+                  "content": "Start Processing",
+                  "fontSize": 16,
+                  "fontWeight": "bold",
+                  "fill": "#ffffff",
+                  "fontFamily": "Inter"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
