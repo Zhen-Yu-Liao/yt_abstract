@@ -8,11 +8,11 @@
 
 ## 📺 實機演示 (Demo)
 
-👀 **親眼見證如何將 1 小時的影片在 30 秒內整理完畢：**
+👀 **親眼見證 AI 如何快速整理影片重點：**
 
-[![點擊觀看 Demo 影片](https://img.shields.io/badge/🎬_觀看_Demo_影片-點擊這裡-red?style=for-the-badge)](https://github.com/Zhen-Yu-Liao/yt_abstract/releases/download/v1.0.0/demo.mp4)
+<https://github.com/user-attachments/assets/demo.mp4>
 
-> 💡 點擊上方按鈕下載 Demo 影片 (28MB)
+> 💡 如果影片無法播放，請[點此下載](https://github.com/Zhen-Yu-Liao/yt_abstract/releases/download/v1.0.0/demo.mp4)
 
 ---
 
