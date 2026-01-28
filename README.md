@@ -10,9 +10,9 @@
 
 👀 **親眼見證 AI 如何快速整理影片重點：**
 
-<https://github.com/user-attachments/assets/demo.mp4>
+<video src="https://github.com/Zhen-Yu-Liao/yt_abstract/raw/master/demo.mp4" controls="controls" style="max-width: 100%;"></video>
 
-> 💡 如果影片無法播放，請[點此下載](https://github.com/Zhen-Yu-Liao/yt_abstract/releases/download/v1.0.0/demo.mp4)
+> 💡 如果影片無法播放，請[點此下載](https://github.Yu-Liao/yt_abstract/raw/master/demo.mp4)
 
 ---
 
