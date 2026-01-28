@@ -1,6 +1,4 @@
-import React from 'react';
-import { X, ExternalLink, HelpCircle, Terminal } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { X, ExternalLink, HelpCircle } from 'lucide-react';
 
 interface FAQModalProps {
     isOpen: boolean;
