@@ -9,7 +9,7 @@ DOWNLOAD_DIR = Path("downloads")
 BIN_DIR = Path("backend/bin")
 
 def install_ffmpeg():
-    print("🚀 Starting FFmpeg installation...")
+    print(">>> Starting FFmpeg installation...")
     
     # 1. Create directories
     DOWNLOAD_DIR.mkdir(exist_ok=True)
@@ -19,16 +19,16 @@ def install_ffmpeg():
     
     # 2. Download
     if not zip_path.exists():
-        print(f"⬇️ Downloading FFmpeg from {FFMPEG_URL}...")
+        print(f">>> Downloading FFmpeg from {FFMPEG_URL}...")
         try:
             urllib.request.urlretrieve(FFMPEG_URL, zip_path)
-            print("✅ Download complete.")
+            print(">>> Download complete.")
         except Exception as e:
-            print(f"❌ Download failed: {e}")
+            print(f"!!! Download failed: {e}")
             return
 
     # 3. Extract
-    print("📦 Extracting FFmpeg...")
+    print(">>> Extracting FFmpeg...")
     try:
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             # Find the bin folder inside the zip
@@ -41,10 +41,10 @@ def install_ffmpeg():
                         shutil.copyfileobj(source, target)
                     print(f"   -> Extracted {filename}")
         
-        print(f"✅ FFmpeg installed to: {BIN_DIR.absolute()}")
+        print(f">>> FFmpeg installed to: {BIN_DIR.absolute()}")
         
     except Exception as e:
-        print(f"❌ Extraction failed: {e}")
+        print(f"!!! Extraction failed: {e}")
 
 if __name__ == "__main__":
     install_ffmpeg()
