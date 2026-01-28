@@ -2,8 +2,9 @@ name: Build Multi-Platform Executables
 
 on:
   push:
-    branches: [ master ]
-  workflow_dispatch:
+    tags:
+      - 'v*'  # 只在建立 v1.0.0, v1.2.3 等版本標籤時觸發
+  workflow_dispatch:  # 保留手動觸發選項
 
 jobs:
   build:
