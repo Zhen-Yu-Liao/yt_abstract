@@ -75,73 +75,78 @@ GEMINI_API_KEY=AIzaSy_your_gemini_key_here
 
 ---
 
-## 🚀 如何啟動 (How to Run)
+## 📦 如何打包與發布 (Build & Distribution)
 
-我們提供了一鍵啟動腳本，這是最簡單的方法：
+本專案已完全自動化。只要您將程式碼推送到 GitHub，**GitHub Actions** 就會自動為您打包出 Windows, Mac, Linux 三個版本的執行檔。
 
-### 方法一：一鍵啟動 (推薦)
+### 自動打包 (推薦)
 
-在專案根目錄執行：
+1. Push code 到 `main` 分支。
+2. 前往 GitHub Repo 的 **Actions** 頁面。
+3. 等待 `Build Multi-Platform Executables` 跑完 (全綠)。
+4. 點擊該次 Run，在下方 **Artifacts** 區塊下載對應平台的壓縮檔。
 
-```powershell
-./start_app.ps1
+### 手動打包
+
+若要在本地打包 (僅限目前平台)：
+
+```bash
+# 1. 確保已安裝所有依賴
+pip install pyinstaller
+pip install -r backend/requirements.txt
+
+# 2. 執行打包腳本
+python build_exe.py
 ```
 
-此腳本會自動：
-
-1. 啟動後端伺服器 (Port 8000)
-2. 啟動前端開發伺服器
-3. **自動開啟預設瀏覽器** 並進入 `http://localhost:5173`
-
-### 方法二：手動啟動
-
-若腳本無法執行，請分別開啟兩個終端機視窗：
-
-**視窗 1 (後端)**:
-
-```powershell
-uvicorn backend.main:app --reload --port 8000
-```
-
-**視窗 2 (前端)**:
-
-```powershell
-cd frontend
-npm run dev
-```
-
-接著打開瀏覽器前往：[http://localhost:5173](http://localhost:5173)
+成品位於 `dist/` 資料夾。
 
 ---
 
-## 📖 使用指南 (User Guide)
+## 🏃‍♂️ 下載後如何執行 (How to Run Distributables)
 
-1. **貼上連結**: 複製 YouTube 影片網址並貼上。
-2. **選擇引擎**:
-   - 若您有 **Groq Key**，強烈建議選擇 **Cloud API**，速度最快。
-   - 若無，請選擇 **Local GPU** (初次使用需下載模型，會比較慢)。
-3. **選擇功能**: 預設勾選 "Transcribe" (轉錄) 與 "Summary" (摘要)。
-4. **執行分析**: 點擊 **Run Analysis**。
-5. **查看結果**:
-   - 處理完成後，右側會顯示兩分頁。
-   - **Transcript**: 完整的時間軸逐字稿。
-   - **Summary & Mind Map**: 重點摘要筆記與心智圖。
-6. **下載**: 點擊右上角的 📥 圖示，將完整報告下載到電腦。
+給朋友的執行指南：
+
+### Windows 🪟
+
+1. 下載 `yt_abstract_win.zip` 並解壓縮。
+2. 進入資料夾，點擊 `yt_abstract.exe` 即可執行。
+
+### macOS 🍎 (必讀！)
+
+由於沒有繳交 Apple Developer 年費 ($99)，初次執行會顯示「應用程式已損毀」。請依序執行以下步驟 (只需做一次)：
+
+1. 下載 `yt_abstract_mac.zip` 並解壓縮。
+2. 將 `yt_abstract.app` 拖曳到「應用程式」資料夾 (或任意處)。
+3. **開啟終端機 (Terminal)**。
+4. 複製並執行以下指令 (修復隔離屬性)：
+
+   ```bash
+   xattr -cr /path/to/yt_abstract.app
+   # 若您放在應用程式資料夾，路徑通常是 /Applications/yt_abstract.app
+   ```
+
+5. 現在可以直接雙擊 App 開啟了！
+
+### Linux 🐧
+
+1. 下載 `yt_abstract_linux.tar.gz` 並解壓縮。
+2. 開啟終端機，進入資料夾。
+3. 給予執行權限：
+
+   ```bash
+   chmod +x yt_abstract
+   ```
+
+4. 執行：
+
+   ```bash
+   ./yt_abstract
+   ```
 
 ---
 
-## ❓ 常見問題 (FAQ)
-
-**Q: 為什麼進度條一開始會顯示 "0 B"?**
-A: 系統正在解析 YouTube 影片資訊，這需要幾秒鐘，稍後就會開始下載並顯示進度。
-
-**Q: 如何獲取 Gemini API Key?**
-A: 前往 [Google AI Studio](https://aistudio.google.com/app/apikey) 免費申請。
-
-**Q: 如何獲取 Groq API Key?**
-A: 前往 [Groq Console](https://console.groq.com/keys) 免費申請。
-
----
+## 🛠️ 開發模式啟動 (Development Mode)
 
 ## 🏗️ 技術架構 (Tech Stack)
 
