@@ -10,9 +10,9 @@
 
 👀 **親眼見證如何將 1 小時的影片在 30 秒內整理完畢：**
 
-![Demo Video](test_final.webm)
+[![點擊觀看 Demo 影片](https://img.shields.io/badge/🎬_觀看_Demo_影片-點擊這裡-red?style=for-the-badge)](https://github.com/Zhen-Yu-Liao/yt_abstract/releases/download/v1.0.0/demo.mp4)
 
-*(點擊上方影片播放，或查看 `test_final.webm` 檔案)*
+> 💡 點擊上方按鈕下載 Demo 影片 (28MB)
 
 ---
 
