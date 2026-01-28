@@ -72,6 +72,7 @@ def build():
         str(BACKEND_DIR / "main.py"),
         '--name=yt_abstract',
         '--onedir', 
+        '--windowed', # Required for Mac .app bundle and nice Windows UX
         '--noconfirm',
         
         # Static files
