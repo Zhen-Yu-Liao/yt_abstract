@@ -46,3 +46,13 @@ backend/temp/
 backend/bin/
 # Tests
 tests/reproduce_403.py
+
+# Dev/Build Artifacts (should not be in repo)
+*.spec
+*.webm
+*.log
+mac_debug.log
+traceback.txt
+measure_startup.ps1
+frontend/build_log.txt
+frontend/capture_screenshot.*
