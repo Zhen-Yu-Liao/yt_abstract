@@ -92,10 +92,14 @@ def build():
         '--exclude-module=faster_whisper',
         
         # Metadata
-        f'--icon={BASE_DIR / "app_icon.ico"}',
+        # f'--icon={BASE_DIR / "app_icon.ico"}', # Moving to conditional
     ]
     
     # 3. Platform Specifics
+    # Icon (Windows only for now to avoid Mac conversion issues)
+    if platform.system() == "Windows":
+        pyinstaller_args.append(f'--icon={BASE_DIR / "app_icon.ico"}')
+
     # FFmpeg
     ffmpeg_binaries = get_ffmpeg_paths()
     for src, dst in ffmpeg_binaries:
