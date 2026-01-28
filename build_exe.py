@@ -86,7 +86,7 @@ def build():
         # Excludes (Optimization)
         '--exclude-module=torch',
         '--exclude-module=matplotlib',
-        '--exclude-module=PIL',
+        # '--exclude-module=PIL', # Needed for icon conversion on Mac?
         '--exclude-module=tkinter',
         '--exclude-module=pynvml',       
         '--exclude-module=faster_whisper',
