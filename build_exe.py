@@ -110,60 +110,68 @@ def build():
     
     print("\n>>> PyInstaller Build Complete!")
     
+    # DEBUG: Print dist structure
+    print(">>> Debugging: Listing dist directory structure:")
+    for root, dirs, files in os.walk(DIST_DIR):
+        level = root.replace(str(DIST_DIR), '').count(os.sep)
+        indent = ' ' * 4 * (level)
+        print(f"{indent}{os.path.basename(root)}/")
+        subindent = ' ' * 4 * (level + 1)
+        # Limit file listing to avoid spam
+        for f in files[:5]:
+            print(f"{subindent}{f}")
+        if len(files) > 5:
+            print(f"{subindent}... ({len(files)-5} more)")
+
     # 5. Post-Build: Dependency Injection (faster_whisper)
     exe_name = "yt_abstract.app" if platform.system() == "Darwin" else "yt_abstract"
-    
-    # Location where PyInstaller puts the output
-    # For onedir, it's typically dist/yt_abstract (or .app on Mac depending on mode)
-    # Note: --onedir on Mac creates a .app bundle but the internal files are deep inside.
-    # However, to keep it simple across platforms for installing 'faster_whisper',
-    # we target the folder containing the executable logic.
-    
     target_dir = DIST_DIR / "yt_abstract" # Default
     
     if platform.system() == "Darwin":
-        # On Mac, --onedir creates yt_abstract.app
-        # We need to find where to put libraries.
-        # Usually dist/yt_abstract.app/Contents/MacOS is where binaries live,
-        # but _internal might be elsewhere depending on PyInstaller version.
-        # Let's trust PyInstaller's default layout and assume we find _internal inside the bundle?
-        # Pro-tip: For Mac, installing into the bundle is tricky via pip target.
-        # We might skip manual install on Mac for now and rely on PyInstaller collecting it?
-        # BUT we excluded it.
-        # Let's try to target the standard path if it exists.
-        candidate = DIST_DIR / "yt_abstract.app" / "Contents" / "Resources"
-        if candidate.exists():
-            target_dir = candidate
-        else:
-            # Fallback
-            target_dir = DIST_DIR / "yt_abstract.app" / "Contents" / "MacOS"
-            
-    internal_dir = target_dir / "_internal"
-    
-    # If the _internal dir wasn't created by PyInstaller (e.g. if we messed up paths), we can't install to it.
-    # But usually PyInstaller creates it.
-    # On Windows/Linux, it is dist/yt_abstract/_internal
-    
-    # Fallback search
-    if not internal_dir.exists():
-        # Try generic
-        internal_dir = DIST_DIR / "yt_abstract" / "_internal"
+        # Search for where _internal might be hidden
+        # Typically: dist/yt_abstract.app/Contents/Frameworks/_internal or just _internal
+        # Let's search recursively for '_internal' inside dist/yt_abstract.app
+        app_root = DIST_DIR / "yt_abstract.app"
+        found_internal = None
+        if app_root.exists():
+            for root, dirs, files in os.walk(app_root):
+                if "_internal" in dirs:
+                    found_internal = Path(root) / "_internal"
+                    break
         
-    if internal_dir.exists() or platform.system() != "Darwin": # Only strictly enforce on Win/Linux where structure is known
-        if internal_dir.exists():
-            print(f">>> Installing faster_whisper to {internal_dir}...")
-            try:
-                subprocess.check_call([
-                    "pip", "install", 
-                    "faster_whisper", 
-                    "-t", str(internal_dir), 
-                    "--no-deps"
-                ])
-                print(">>> Installed faster_whisper successfully.")
-            except Exception as e:
-                print(f"!!! Failed to install faster_whisper: {e}")
+        if found_internal:
+            internal_dir = found_internal
+        else:
+            # Fallback (maybe it is not called _internal on Mac or different PyInstaller setting)
+            # We will default to Contents/Resources just in case we need to create it?
+            # No, if PyInstaller didn't make it, we probably shouldn't mess with it.
+            internal_dir = app_root / "Contents" / "Resources" / "_internal" # Guess
     else:
-        print(f"!!! Warning: Could not locate _internal directory for manual package installation.")
+        internal_dir = DIST_DIR / "yt_abstract" / "_internal"
+
+    print(f">>> Target _internal directory: {internal_dir}")
+
+    # Install faster_whisper (Non-Fatal)
+    try:
+        if internal_dir.exists() or platform.system() != "Darwin":
+            print(f">>> Installing faster_whisper to {internal_dir}...")
+            subprocess.check_call([
+                "pip", "install", 
+                "faster_whisper", 
+                "-t", str(internal_dir), 
+                "--no-deps"
+            ])
+            print(">>> Installed faster_whisper successfully.")
+        else:
+             print(f"!!! Warning: Could not locate _internal directory (_internal) inside app bundle. Skipping optimization.")
+             
+    except Exception as e:
+        print(f"!!! Warning: Failed to install faster_whisper: {e}")
+        print("!!! Continuing build process without manual optimization.")
+        # Do not raise, allow build to succeed
+    
+    # Final Success Message
+    print(">>> Build Script Finished Successfully.")
 
 if __name__ == "__main__":
     build()
