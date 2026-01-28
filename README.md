@@ -10,10 +10,9 @@
 
 👀 **親眼見證 AI 如何快速整理影片重點：**
 
-[![點擊觀看 Demo 影片](https://img.shields.io/badge/🎬_點擊觀看_Demo_影片-333333?style=for-the-badge&logo=youtube&logoColor=red)](https://github.com/Zhen-Yu-Liao/yt_abstract/blob/master/demo.mp4)
+<https://github.com/user-attachments/assets/19481b92-95eb-4359-804c-6b70dbc8b9c7>
 
-> 💡 點擊上方按鈕將開啟 GitHub 播放器觀看影片。
-> (GitHub README 不支援直接嵌入影片播放器)
+> 💡 如果影片無法播放，請[點此下載](https://github.com/Zhen-Yu-Liao/yt_abstract/releases/download/v1.0.0/demo.mp4)
 
 ---
 
