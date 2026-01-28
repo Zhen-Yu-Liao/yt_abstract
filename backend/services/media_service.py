@@ -1,4 +1,4 @@
-import yt_dlp
+# import yt_dlp  <-- Removed top-level import
 import uuid
 import logging
 from pathlib import Path
@@ -7,6 +7,9 @@ import os
 from backend.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+# Lazy import placeholder
+yt_dlp = None
 
 class MediaService:
     def __init__(self):
@@ -67,8 +70,25 @@ class MediaService:
                     progress_callback({'percent': 100, 'downloaded': downloaded, 'total': downloaded, 'speed': 0})
                     print(f"[DOWNLOAD] 100% - Finished ({downloaded:,} bytes)")
 
-        ffmpeg_path = os.path.join(settings.BASE_DIR, "bin", "ffmpeg.exe")
-        
+
+        import sys
+        if getattr(sys, 'frozen', False):
+            # Running as compiled EXE
+            # In onedir mode with --add-binary source;., the binary is in sys._MEIPASS
+            # or sometimes in the dir of executable depending on config.
+            # We check typical locations.
+            base_path = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
+            ffmpeg_path = os.path.join(base_path, "ffmpeg.exe")
+            
+            # Debugging fallback: check if it's in a subfolder or root
+            if not os.path.exists(ffmpeg_path):
+                 ffmpeg_path = os.path.join(os.path.dirname(sys.executable), "ffmpeg.exe")
+        else:
+            # Running in dev mode
+            ffmpeg_path = os.path.join(settings.BASE_DIR, "bin", "ffmpeg.exe")
+            
+        logger.info(f"Using FFmpeg path: {ffmpeg_path}")
+
         ydl_opts = {
             'format': 'bestaudio/best',
             'postprocessors': [{
@@ -93,6 +113,12 @@ class MediaService:
         }
 
         try:
+            global yt_dlp
+            if yt_dlp is None:
+                logger.info("Lazy loading yt_dlp module...")
+                import yt_dlp as _yt_dlp
+                yt_dlp = _yt_dlp
+
             if progress_callback:
                 progress_callback({'percent': 0, 'downloaded': 0, 'total': 0, 'speed': 0, 'message': 'Preparing download...'})
 

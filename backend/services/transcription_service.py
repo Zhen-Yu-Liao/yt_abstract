@@ -2,12 +2,15 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from pathlib import Path
-from faster_whisper import WhisperModel
+# from faster_whisper import WhisperModel  <-- Removed top-level import
 import openai
 from backend.core.config import settings
 from typing import Generator, Union
 
 logger = logging.getLogger(__name__)
+
+# Global placeholder for lazy import
+WhisperModel = None
 
 def _format_timestamp(seconds: float) -> str:
     """Convert seconds to MM:SS format."""
@@ -24,20 +27,7 @@ class TranscriptionStrategy(ABC):
     def transcribe(self, audio_path: Path, duration: float, api_key: str = None) -> Generator[tuple[str, float], None, str]:
         """
         Yields (status_message, progress_percent)
-        Returns full_text at the end (handled via StopIteration value or final yield payload mechanism, 
-        but simpler to just yield progress and return text or yield a final 'complete' event).
-        
-        To make it compatible with streaming, we will yield progress events, 
-        and the LAST yielded item will be the full text wrapped in a specific way or we manage state in caller.
-        
-        Actually, let's make it yield progress 0.0-1.0. 
-        And return the text? Generators in Python return value via StopIteration but that's hard to catch in simple iteration.
-        
-        Better approach: Yield progress floats. 
-        The caller will accumulate text? No, Whisper streams segments.
-        
-        Let's yield: {"type": "progress", "value": 0.5} AND {"type": "segment", "text": "..."}
-        Or simply yield progress updates, and at the end yield the full text?
+        Returns full_text at the end.
         """
         pass
 
@@ -45,8 +35,15 @@ class LocalFasterWhisperStrategy(TranscriptionStrategy):
     _model = None
 
     def __init__(self):
+        global WhisperModel
+        if WhisperModel is None:
+            logger.info("Lazy loading faster_whisper module...")
+            from faster_whisper import WhisperModel as _WM
+            WhisperModel = _WM
+
         if LocalFasterWhisperStrategy._model is None:
             logger.info(f"Loading Faster-Whisper model: {settings.DEFAULT_WHISPER_MODEL} ...")
+            logger.info("NOTE: First run might be slow due to model download.")
             try:
                 LocalFasterWhisperStrategy._model = WhisperModel(
                     settings.DEFAULT_WHISPER_MODEL, 
