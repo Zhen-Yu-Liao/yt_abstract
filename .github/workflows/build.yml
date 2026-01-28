@@ -6,6 +6,9 @@ on:
       - 'v*'  # 只在建立 v1.0.0, v1.2.3 等版本標籤時觸發
   workflow_dispatch:  # 保留手動觸發選項
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build for ${{ matrix.os }}
