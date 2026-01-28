@@ -1,104 +1,168 @@
 import PyInstaller.__main__
 import os
 import shutil
+import platform
+import subprocess
+import stat
 from pathlib import Path
 
 # Define paths
-BASE_DIR = Path(__file__).parent
+BASE_DIR = Path(__file__).resolve().parent
 BACKEND_DIR = BASE_DIR / "backend"
-FRONTEND_DIR = BASE_DIR / "frontend"
 DIST_DIR = BASE_DIR / "dist"
+BIN_DIR = BACKEND_DIR / "bin"
+
+def get_ffmpeg_paths():
+    """
+    Returns a list of (source, dest) tuples for FFmpeg binaries.
+    """
+    system = platform.system()
+    binaries = []
+    
+    if system == "Windows":
+        # On Windows, we bundle the .exe files we downloaded
+        ffmpeg_exe = BIN_DIR / "ffmpeg.exe"
+        ffprobe_exe = BIN_DIR / "ffprobe.exe"
+        
+        if ffmpeg_exe.exists():
+            binaries.append((str(ffmpeg_exe), "."))
+        if ffprobe_exe.exists():
+            binaries.append((str(ffprobe_exe), "."))
+            
+    else:
+        # On Mac/Linux, we expect ffmpeg to be installed via system package manager (brew/apt)
+        ffmpeg_path = shutil.which("ffmpeg")
+        ffprobe_path = shutil.which("ffprobe")
+        
+        if ffmpeg_path:
+            print(f">>> Found system FFmpeg at: {ffmpeg_path}")
+            binaries.append((ffmpeg_path, "."))
+        else:
+            print("!!! WARNING: FFmpeg not found in system PATH. App may fail.")
+            
+        if ffprobe_path:
+            binaries.append((ffprobe_path, "."))
+
+    return binaries
+
+def on_rm_error(func, path, exc_info):
+    # Error handler for shutil.rmtree to fix Windows file lock/permission issues
+    try:
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+    except Exception as e:
+        print(f"!!! Warning: Failed to remove {path}: {e}")
 
 def build():
-    print(">>> Starting Build Process...")
+    print(f">>> Starting Build Process for Platform: {platform.system()}...")
     
     # 1. Clean dist
     if DIST_DIR.exists():
-        shutil.rmtree(DIST_DIR)
-        print(">>> Cleaned dist directory.")
-
-    # 2. Check if frontend is built (we assume yes from previous step, or check static)
-    static_assets = BACKEND_DIR / "static" / "assets"
-    if not static_assets.exists():
-        print("!!! API WARNING: Frontend assets not found in backend/static. App might look broken.")
+        try:
+            shutil.rmtree(DIST_DIR, onerror=on_rm_error)
+            print(">>> Cleaned dist directory.")
+        except Exception as e:
+            print(f"!!! Warning: Could not fully clean dist directory: {e}")
     
-    # 3. Run PyInstaller
-    # --add-data: source;dest (Windows uses ;)
-    # We bundle the static folder into 'static' in the temp dir of exe
-    print(">>> Running PyInstaller...")
+    # 2. Prepare Arguments
+    sep = os.pathsep # ';' on Windows, ':' on Unix
     
-    PyInstaller.__main__.run([
+    # Base arguments
+    pyinstaller_args = [
         str(BACKEND_DIR / "main.py"),
         '--name=yt_abstract',
-        '--onedir',  # Changed from --onefile to --onedir for speed
+        '--onedir', 
         '--noconfirm',
-        '--noupx',   # Disable UPX to avoid decompression overhead
         
-        # Add static files (Frontend)
-        '--add-data', f'{BACKEND_DIR / "static"}{os.pathsep}static',
+        # Static files
+        f'--add-data={BACKEND_DIR / "static"}{sep}static',
         
-        # Add FFmpeg (Binary)
-        '--add-binary', f'{BACKEND_DIR / "bin" / "ffmpeg.exe"}{os.pathsep}.',
-        '--add-binary', f'{BACKEND_DIR / "bin" / "ffprobe.exe"}{os.pathsep}.',
+        # Hidden imports
+        '--hidden-import=uvicorn',
+        '--hidden-import=fastapi',
+        '--hidden-import=engineio.async_drivers.asgi',
         
-        # Exclude heavy modules not needed for inference (Manual Copy/Install Strategy)
+        # Excludes (Optimization)
         '--exclude-module=torch',
         '--exclude-module=matplotlib',
         '--exclude-module=PIL',
         '--exclude-module=tkinter',
-        #'--exclude-module=yt_dlp',       # Reverted: Let process naturally
-        '--exclude-module=pynvml',       # Manual install
-        '--exclude-module=faster_whisper', # Manual install (to avoid analysis hang)
-        
-        # Hidden imports needed for lazy loading (Only for modules handled by PyInstaller)
-        '--hidden-import=uvicorn',
-        '--hidden-import=fastapi',
-        '--hidden-import=engineio.async_drivers.asgi',
-
-        
-        # Removed collect-all to avoid stall
-        # '--collect-all=faster_whisper', 
+        '--exclude-module=pynvml',       
+        '--exclude-module=faster_whisper',
         
         # Metadata
         f'--icon={BASE_DIR / "app_icon.ico"}',
-    ])
+    ]
     
-    print("\n>>> Build Complete!")
-    print(f">>> Executable is at: {DIST_DIR / 'yt_abstract.exe'}")
+    # 3. Platform Specifics
+    # FFmpeg
+    ffmpeg_binaries = get_ffmpeg_paths()
+    for src, dst in ffmpeg_binaries:
+        pyinstaller_args.append(f'--add-binary={src}{sep}{dst}')
+        
+    # UPX - Disable to avoid issues
+    pyinstaller_args.append('--noupx')
     
-    # 4. Manual Copy/Install for Speed (Hybrid Packaging)
-    INTERNAL_DIR = DIST_DIR / "yt_abstract" / "_internal"
+    # 4. Run PyInstaller
+    print(">>> Running PyInstaller with args:", pyinstaller_args)
+    PyInstaller.__main__.run(pyinstaller_args)
     
-    # 4.1 Copy yt_dlp (Reverted: PyInstaller handles this)
-    # try:
-    #     print(">>> Manually copying yt_dlp to _internal...")
-    #     import yt_dlp
-    #     yt_dlp_src = Path(yt_dlp.__file__).parent
-    #     
-    #     dest_dir = INTERNAL_DIR / "yt_dlp"
-    #     if dest_dir.exists():
-    #         shutil.rmtree(dest_dir)
-    #     shutil.copytree(yt_dlp_src, dest_dir)
-    #     print(f">>> Copied yt_dlp to {dest_dir}")
-    #     
-    # except Exception as e:
-    #     print(f"!!! Failed to copy yt_dlp: {e}")
-
-    # 4.2 Install faster_whisper (and dependencies if needed, but we try no-deps first if env has them)
-    # Actually, faster_whisper has binary dependencies (CTranslate2). 
-    # Installing via pip to target dir is safest.
-    try:
-        print(">>> Installing faster_whisper to _internal...")
-        import subprocess
-        subprocess.check_call([
-            "pip", "install", 
-            "faster_whisper", 
-            "-t", str(INTERNAL_DIR), 
-            "--no-deps" # Assume dependencies (av, numpy) are handled by PyInstaller or existing env
-        ])
-        print(">>> Installed faster_whisper")
-    except Exception as e:
-        print(f"!!! Failed to install faster_whisper: {e}")
+    print("\n>>> PyInstaller Build Complete!")
+    
+    # 5. Post-Build: Dependency Injection (faster_whisper)
+    exe_name = "yt_abstract.app" if platform.system() == "Darwin" else "yt_abstract"
+    
+    # Location where PyInstaller puts the output
+    # For onedir, it's typically dist/yt_abstract (or .app on Mac depending on mode)
+    # Note: --onedir on Mac creates a .app bundle but the internal files are deep inside.
+    # However, to keep it simple across platforms for installing 'faster_whisper',
+    # we target the folder containing the executable logic.
+    
+    target_dir = DIST_DIR / "yt_abstract" # Default
+    
+    if platform.system() == "Darwin":
+        # On Mac, --onedir creates yt_abstract.app
+        # We need to find where to put libraries.
+        # Usually dist/yt_abstract.app/Contents/MacOS is where binaries live,
+        # but _internal might be elsewhere depending on PyInstaller version.
+        # Let's trust PyInstaller's default layout and assume we find _internal inside the bundle?
+        # Pro-tip: For Mac, installing into the bundle is tricky via pip target.
+        # We might skip manual install on Mac for now and rely on PyInstaller collecting it?
+        # BUT we excluded it.
+        # Let's try to target the standard path if it exists.
+        candidate = DIST_DIR / "yt_abstract.app" / "Contents" / "Resources"
+        if candidate.exists():
+            target_dir = candidate
+        else:
+            # Fallback
+            target_dir = DIST_DIR / "yt_abstract.app" / "Contents" / "MacOS"
+            
+    internal_dir = target_dir / "_internal"
+    
+    # If the _internal dir wasn't created by PyInstaller (e.g. if we messed up paths), we can't install to it.
+    # But usually PyInstaller creates it.
+    # On Windows/Linux, it is dist/yt_abstract/_internal
+    
+    # Fallback search
+    if not internal_dir.exists():
+        # Try generic
+        internal_dir = DIST_DIR / "yt_abstract" / "_internal"
+        
+    if internal_dir.exists() or platform.system() != "Darwin": # Only strictly enforce on Win/Linux where structure is known
+        if internal_dir.exists():
+            print(f">>> Installing faster_whisper to {internal_dir}...")
+            try:
+                subprocess.check_call([
+                    "pip", "install", 
+                    "faster_whisper", 
+                    "-t", str(internal_dir), 
+                    "--no-deps"
+                ])
+                print(">>> Installed faster_whisper successfully.")
+            except Exception as e:
+                print(f"!!! Failed to install faster_whisper: {e}")
+    else:
+        print(f"!!! Warning: Could not locate _internal directory for manual package installation.")
 
 if __name__ == "__main__":
     build()
