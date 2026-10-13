@@ -5,6 +5,7 @@ import platform
 import subprocess
 import stat
 from pathlib import Path
+import certifi
 
 # Define paths
 BASE_DIR = Path(__file__).resolve().parent
@@ -77,6 +78,7 @@ def build():
         
         # Static files
         f'--add-data={BACKEND_DIR / "static"}{sep}static',
+        f'--add-data={certifi.where()}{sep}certifi', # Fix: Bundle SSL certs
         
         # Hidden imports
         '--hidden-import=uvicorn',

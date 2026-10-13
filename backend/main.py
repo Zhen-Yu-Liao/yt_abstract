@@ -72,6 +72,15 @@ async def serve_spa(full_path: str):
 
 
 if __name__ == "__main__":
+    # FIX: Patch stdout/stderr for PyInstaller --noconsole mode
+    # Uvicorn's logging relies on sys.stdout.isatty(), which crashes if sys.stdout is None
+    import sys
+    import os
+    if sys.stdout is None:
+        sys.stdout = open(os.devnull, 'w')
+    if sys.stderr is None:
+        sys.stderr = open(os.devnull, 'w')
+
     import uvicorn
     import webbrowser
     import threading
